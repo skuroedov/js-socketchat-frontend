@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { FC, FormEvent, useEffect, useState } from "react";
+import { FC, FormEvent, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSocket } from "../src/lib/hooks/use-socket";
 import { IMessage } from "../src/lib/entities/message";
@@ -7,15 +7,22 @@ import { IMessage } from "../src/lib/entities/message";
 const Home: FC = () => {
   const [username, setUsername] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
+  const [buffer, setBuffer] = useState<IMessage>();
 
   const socket = useSocket();
   const form = useForm();
 
-  useEffect(() => {
-    socket.on("finalMsg", (data: IMessage) => {
-      setMessages([...messages, data]);
-    });
+  const receiveMessage = useCallback((data: IMessage) => {
+    setMessages([...messages, data]);
   }, [messages]);
+
+  useEffect(() => {
+    socket.on("finalMsg", (data: IMessage) => setBuffer(data));
+  }, []);
+
+  useEffect(() => {
+    receiveMessage(buffer!);
+  }, [buffer])
 
   const handleUsernameSave = (e: FormEvent) => {
     e.preventDefault();
