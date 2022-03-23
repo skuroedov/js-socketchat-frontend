@@ -17,11 +17,13 @@ const Home: FC = () => {
   }, [messages]);
 
   useEffect(() => {
-    socket.on("finalMsg", (data: IMessage) => setBuffer(data));
+    socket.on("finalMsg", setBuffer);
   }, []);
 
   useEffect(() => {
-    receiveMessage(buffer!);
+    if(buffer != undefined) {
+      receiveMessage(buffer!);
+    }
   }, [buffer])
 
   const handleUsernameSave = (e: FormEvent) => {
