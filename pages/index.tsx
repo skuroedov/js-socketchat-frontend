@@ -1,11 +1,11 @@
 import Head from "next/head";
-import { FC, useEffect, useState } from "react";
+import { FC, FormEvent, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSocket } from "../src/lib/hooks/use-socket";
 import { IMessage } from "../src/lib/entities/message";
 
 const Home: FC = () => {
-  const [username, setUsername] = useState<string>();
+  const [username, setUsername] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
 
   const socket = useSocket();
@@ -17,16 +17,20 @@ const Home: FC = () => {
     });
   }, [messages]);
 
-  const handleUsernameSave = () => {
+  const handleUsernameSave = (e: FormEvent) => {
+    e.preventDefault();
+
     setUsername(form.getValues("username"));
   }
 
-  const handleSendMsg = () => {
-    const msg = form.getValues("msg");
+  const handleSendMsg = (e: FormEvent) => {
+    e.preventDefault();
 
-    socket.emit("clientMsg", { username, text: msg }, (response: any) => {
-      console.log(response);
-    });
+    const msg = form.getValues("msg");
+    if (msg.replace(/\s+/g, '') != "") {
+      socket.emit("clientMsg", { username, text: msg });
+      form.setValue("msg", "");
+    }
   }
 
   return (
@@ -35,29 +39,35 @@ const Home: FC = () => {
         <title>Socket chat</title>
       </Head>
       <main>
-        <label>
-          Username:
-          <input {...form.register("username")} type="text"/>
-          <button onClick={() => handleUsernameSave()}>Save</button>
-        </label>
-        <section>
-          <ul>
-            {
-              messages.map((message, index) => {
-                return (
-                  <li key={index}>
-                    {message.username}: {message.text}
-                  </li>
-                );
-              })
-            }
-          </ul>
-          <label>
-            Message:
-            <input {...form.register("msg")} type="text"/>
-          </label>
-          <button onClick={() => handleSendMsg()}>Send</button>
-        </section>
+        {username == "" ?
+          <form onSubmit={(e) => handleUsernameSave(e)}>
+            <label>
+              <span>Username:</span>
+              <input {...form.register("username")} type="text"/>
+            </label>
+            <button type="submit">Save</button>
+          </form>
+          :
+          <section>
+            <div className="messages">
+              <ul>
+                {
+                  messages.map((message, index) => {
+                    return (
+                      <li key={index}>
+                        <span className="message__author">{message.username}:</span> {message.text}
+                      </li>
+                    );
+                  })
+                }
+              </ul>
+            </div>
+            <form className="w-full" onSubmit={(e) => handleSendMsg(e)}>
+              <input {...form.register("msg")} type="text" placeholder="Text..."/>
+              <button type="submit">Send</button>
+            </form>
+          </section>
+        }
       </main>
     </>
   );
