@@ -1,3 +1,13 @@
 const withPlugins = require("next-compose-plugins");
+const dotenvLoad = require("dotenv-load");
 
-module.exports = withPlugins([], {});
+dotenvLoad();
+
+const config = {
+    webpack5: true,
+    env: {
+        ENDPOINT: process.env.ENDPOINT,
+    }
+};
+
+module.exports = withPlugins([], config);
